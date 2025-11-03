@@ -2,16 +2,13 @@ import { Injectable, NotFoundException, BadRequestException, ConflictException }
 import { User } from "./entities/user.entity";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { InferType } from "yup";
-import { createUserSchema } from "./schema/create-user-registration-schema";
-import { loginUserSchema } from "./schema/user-login-schema";
+import { CreateUserDto, LoginUserDto } from "./dto/create_user_dto";
 import * as bcrypt from "bcryptjs";
 import * as jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 import { randomInt } from "crypto";
-type CreateUserDto = InferType<typeof createUserSchema>;
-type LoginUserDto = InferType<typeof loginUserSchema>;
-
+import { UserRole } from "../../common/enum/roles.enum";
+import { assignRoleBasedOnEmail } from "../../common/utils/roleHelper"; 
 @Injectable()
 export class UserService {
     constructor(@InjectModel(User.name) private readonly userModel: Model<User>) { }
@@ -31,25 +28,24 @@ export class UserService {
     }
 
     async register(createUserDto: CreateUserDto): Promise<{ user: User, tokens: { accessToken: string, refreshToken: string } }> {
-        const validatedData = await createUserSchema.validate(createUserDto, {
-            abortEarly: false,
-            stripUnknown: true,
-        });
 
-        const existingUser = await this.userModel.findOne({ email: validatedData.email });
+        const existingUser = await this.userModel.findOne({ email: createUserDto.email });
         if (existingUser) throw new ConflictException("User with this email already exist!");
 
-        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+        createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
+        const role = assignRoleBasedOnEmail(createUserDto.email);
+        createUserDto.role = role;
 
-        const user = new this.userModel(validatedData as any);
+        const user = new this.userModel(createUserDto);
         const payload = {
             userId: user._id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            role: user.role,
         }
         const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY as string, {
-            expiresIn: '15'
+            expiresIn: '15m'
         });
         const refreshToken = jwt.sign(payload, process.env.RFRESH_TOKEN_SECRET_KEY as string, {
             expiresIn: '7d'
@@ -65,42 +61,69 @@ export class UserService {
         }
     }
 
-    async login(loginUserDto: LoginUserDto): Promise<{ user: User, tokens: { accessToken: string, refreshToken: string } }> {
-        const validatedData = await loginUserSchema.validate(loginUserDto, {
-            abortEarly: false,
-            stripUnknown: true,
-        });
+    async login(
+        loginUserDto: LoginUserDto
+    ): Promise<{ user: User; tokens: { accessToken: string; refreshToken: string } }> {
 
-        const user = await this.userModel.findOne({ email: validatedData.email });
+        const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+
+        // Find user by email
+        const user = await this.userModel.findOne({ email: loginUserDto.email });
         if (!user) throw new NotFoundException("User not found");
 
-        const isMatch = await bcrypt.compare(validatedData.password, user.password);
-        if (!isMatch) throw new BadRequestException("Invalid credentials");
+        // Check if account is blocked
+        if (user.isAccountBlocked) {
+            throw new BadRequestException('Your account has been blocked. Contact admin for more details');
+        }
+
+        // Check password
+        const isMatch = await bcrypt.compare(loginUserDto.password, user.password);
+        if (!isMatch) {
+            // Increment failed attempts
+            user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+
+            // Block user if max attempts reached
+            if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+                user.isAccountBlocked = true;
+            }
+
+            await user.save();
+
+            const remainingAttempts = Math.max(0, MAX_FAILED_LOGIN_ATTEMPTS - user.failedLoginAttempts);
+            throw new BadRequestException(
+                `Invalid credentials. ${remainingAttempts} attempt(s) remaining.`
+            );
+        }
+
+        // Reset failed attempts on successful login
+        user.failedLoginAttempts = 0;
+
+        // JWT payload
         const payload = {
             userId: user._id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
-        }
-        const existingUser = await this.userModel.findOne({ email: validatedData.email });
-        if (existingUser?.isAccountBlocked) throw new BadRequestException('Your account has been blocked. Contact admin for more details')
+            role: user.role,
+        };
+
         const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY as string, {
-            expiresIn: '15'
+            expiresIn: '15m', // specify minutes explicitly
         });
+
         const refreshToken = jwt.sign(payload, process.env.RFRESH_TOKEN_SECRET_KEY as string, {
-            expiresIn: '7d'
+            expiresIn: '7d',
         });
+
         user.refreshToken = refreshToken;
         await user.save();
 
         return {
             user,
-            tokens: {
-                accessToken,
-                refreshToken,
-            }
-        }
+            tokens: { accessToken, refreshToken },
+        };
     }
+
 
 
     async fetchAllUsers(): Promise<User[]> {

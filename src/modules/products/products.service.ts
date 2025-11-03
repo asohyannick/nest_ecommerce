@@ -2,13 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery, SortOrder } from 'mongoose';
 import { Product } from './entities/product.entity';
-import { createProductSchema } from './schemas/create-products.schema';
-import { updateProductSchema } from './schemas/update-product.schema';
-import type { InferType } from 'yup';
-
-type CreateProductDto = InferType<typeof createProductSchema>;
-type UpdateProductDto = InferType<typeof updateProductSchema>;
-
+import { CreateProductDto } from './dto/product-dto';
+import { SearchProductDto } from './dto/search-product';
 @Injectable()
 export class ProductService {
   constructor(
@@ -24,22 +19,7 @@ export class ProductService {
     return this.productModel.find().sort({ createdAt: -1 }).exec();
   }
 
-  async searchProducts(query: {
-    search?: string;
-    category?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    isFeatured?: boolean;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-    page?: number;
-    limit?: number;
-  }): Promise<{
-    products: Product[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+  async searchProducts(query: SearchProductDto) {
     const {
       search,
       category,
@@ -88,10 +68,15 @@ export class ProductService {
     ]);
 
     return {
-      products,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      message: 'Products fetched successfully!',
+      data: {
+        products,
+        pagination: {
+          total,
+          page,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   }
 
@@ -101,7 +86,7 @@ export class ProductService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(id: string, updateProductDto: CreateProductDto): Promise<Product> {
     const updatedProduct = await this.productModel
       .findByIdAndUpdate(id, updateProductDto, { new: true })
       .exec();

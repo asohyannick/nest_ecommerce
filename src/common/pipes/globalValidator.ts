@@ -3,7 +3,7 @@ import * as yup from 'yup';
 
 @Injectable()
 export class YupValidationPipe implements PipeTransform {
-  constructor(private schema: yup.AnySchema) {}
+  constructor(private schema: yup.AnySchema) { }
 
   async transform(value: any) {
     try {

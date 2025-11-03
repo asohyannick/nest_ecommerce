@@ -1,38 +1,41 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ProductService } from './products.service';
-import { createProductSchema } from './schemas/create-products.schema';
-import { updateProductSchema } from './schemas/update-product.schema';
-import { YupValidationPipe } from '../../common/pipes/globalValidator';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody } from '@nestjs/swagger';
-import type { InferType } from 'yup';
 import { CreateProductDto } from './dto/product-dto';
-
-// type CreateProductDto = InferType<typeof createProductSchema>;
-type UpdateProductDto = InferType<typeof updateProductSchema>;
-
-@ApiTags('Products') // Groups all endpoints under "Products" in Swagger
+import { JwtAuthGuard } from '../../common/guards/jwt-auth-guard';
+import { RolesGuard } from '../../common/guards/role.guard';
+import { Roles } from '../../common/decorators/roles.decorators';
+import { UserRole } from '../../common/enum/roles.enum';
+@ApiTags('Product Management Endpoints')
 @Controller('product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
- @ApiBody({ type: CreateProductDto })
+  constructor(private readonly productService: ProductService) { }
+  // Only ADMIN or SUPER_ADMIN can create products
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiBody({ type: CreateProductDto })
   @Post('create-product')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product has been created successfully.' })
-  @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  async create(@Body(new YupValidationPipe(createProductSchema)) body: CreateProductDto) {
+  @ApiResponse({ status: 404, description: 'Product not found.' })
+  async create(@Body() body: CreateProductDto) {
     const product = await this.productService.create(body);
-    return { message: 'Product has been created successfully!', product };
+    return { success: true, message: 'Product has been created successfully!', data: product };
   }
 
+  // Any authenticated user can view all products
+  @UseGuards(JwtAuthGuard)
   @Get('all-products')
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'All products have been retrieved successfully.' })
   async findAll() {
     const products = await this.productService.findAll();
-    return { message: 'Products have been retrieved successfully!', products };
+    return { success: true, message: 'Products have been retrieved successfully!', data: products };
   }
 
+  // Any authenticated user can view a single product by ID
+  @UseGuards(JwtAuthGuard)
   @Get('fetch-product/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get a single product by ID' })
@@ -40,7 +43,7 @@ export class ProductController {
   @ApiResponse({ status: 404, description: 'Product not found.' })
   async findOne(@Param('id') id: string) {
     const product = await this.productService.findOne(id);
-    return { message: 'Product has been retrieved successfully!', product };
+    return { success: true, message: 'Product has been retrieved successfully!', data: product };
   }
 
   @Get('search-products')
@@ -77,17 +80,23 @@ export class ProductController {
     return { message: 'Products have been fetched successfully!', products };
   }
 
+  // Only ADMIN or SUPER_ADMIN can update products
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBody({ type: CreateProductDto })
   @Put('update-product/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a product by ID' })
   @ApiResponse({ status: 200, description: 'Product updated successfully.' })
   @ApiResponse({ status: 404, description: 'Product not found.' })
-  async update(@Param('id') id: string, @Body(new YupValidationPipe(updateProductSchema)) body: UpdateProductDto) {
+  async update(@Param('id') id: string, @Body() body: CreateProductDto) {
     const product = await this.productService.update(id, body);
     return { message: 'Product has been updated successfully!', product };
   }
 
+  // Only ADMIN or SUPER_ADMIN can delete products
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @Delete('delete-product/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a product by ID' })
