@@ -14,6 +14,9 @@ import { ReviewModule } from './modules/review/review.module';
 import { PromotionModule } from './modules/promotion/promotion.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SupportModule } from './modules/customerSupport/support.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { GiftCardModule } from './modules/giftCard/giftCard.module';
+import { LoyaltyModule } from './modules/reward/loyalty.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -28,8 +31,11 @@ import { SupportModule } from './modules/customerSupport/support.module';
     WishlistModule,
     ReviewModule,
     PromotionModule,
-    AnalyticsModule,  
+    AnalyticsModule,
     SupportModule,
+    SubscriptionModule,
+    GiftCardModule,
+    LoyaltyModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '15m' },
