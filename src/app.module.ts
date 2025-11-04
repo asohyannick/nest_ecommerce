@@ -11,6 +11,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ReviewModule } from './modules/review/review.module';
+import { PromotionModule } from './modules/promotion/promotion.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -24,6 +25,7 @@ import { ReviewModule } from './modules/review/review.module';
     ShippingModule,
     WishlistModule,
     ReviewModule,
+    PromotionModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '15m' },
