@@ -9,6 +9,7 @@ import { ShoppingCartModule } from './modules/cart/shoppingCart.module';
 import { OrderModule } from './modules/orders/order.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -20,6 +21,7 @@ import { ShippingModule } from './modules/shipping/shipping.module';
     OrderModule,
     PaymentModule,
     ShippingModule,
+    WishlistModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '15m' },
