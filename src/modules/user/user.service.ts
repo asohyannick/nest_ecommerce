@@ -7,8 +7,7 @@ import * as bcrypt from "bcryptjs";
 import * as jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 import { randomInt } from "crypto";
-import { UserRole } from "../../common/enum/roles.enum";
-import { assignRoleBasedOnEmail } from "../../common/utils/roleHelper"; 
+import { assignRoleBasedOnEmail } from "../../common/utils/roleHelper";
 @Injectable()
 export class UserService {
     constructor(@InjectModel(User.name) private readonly userModel: Model<User>) { }
@@ -67,22 +66,19 @@ export class UserService {
 
         const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 
-        // Find user by email
         const user = await this.userModel.findOne({ email: loginUserDto.email });
         if (!user) throw new NotFoundException("User not found");
 
-        // Check if account is blocked
+
         if (user.isAccountBlocked) {
             throw new BadRequestException('Your account has been blocked. Contact admin for more details');
         }
 
-        // Check password
         const isMatch = await bcrypt.compare(loginUserDto.password, user.password);
         if (!isMatch) {
-            // Increment failed attempts
+
             user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
 
-            // Block user if max attempts reached
             if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
                 user.isAccountBlocked = true;
             }
@@ -95,10 +91,8 @@ export class UserService {
             );
         }
 
-        // Reset failed attempts on successful login
         user.failedLoginAttempts = 0;
 
-        // JWT payload
         const payload = {
             userId: user._id,
             email: user.email,
@@ -108,7 +102,7 @@ export class UserService {
         };
 
         const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY as string, {
-            expiresIn: '15m', // specify minutes explicitly
+            expiresIn: '15m',
         });
 
         const refreshToken = jwt.sign(payload, process.env.RFRESH_TOKEN_SECRET_KEY as string, {
@@ -250,6 +244,5 @@ export class UserService {
 
         return user;
     }
-
 
 }

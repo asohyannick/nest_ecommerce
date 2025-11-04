@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsBoolean, Min } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, Min, IsArray } from 'class-validator';
 
 export class SearchProductDto {
     @ApiPropertyOptional({ description: 'Search term for name or description' })
@@ -50,4 +50,31 @@ export class SearchProductDto {
     @IsNumber()
     @Min(1)
     limit?: number;
+
+    @ApiPropertyOptional({ description: 'Brand filter' })
+    @IsOptional()
+    @IsString()
+    brand?: string;
+
+    @ApiPropertyOptional({ description: 'Filter by average rating' })
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    minRating?: number;
+
+    @ApiPropertyOptional({ description: 'Filter by number of reviews' })
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    minReviewCount?: number;
+
+    @ApiPropertyOptional({ description: 'Array of feature filters' })
+    @IsOptional()
+    @IsArray()
+    featureFilters?: string[];
+
+    @ApiPropertyOptional({ description: 'Availability status filter' })
+    @IsOptional()
+    @IsBoolean()
+    isAvailable?: boolean;
 }

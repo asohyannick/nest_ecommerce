@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
 @Schema({ timestamps: true })
 export class Product extends Document {
   @Prop({
@@ -46,10 +45,10 @@ export class Product extends Document {
     default: [],
     validate: {
       validator: (arr: string[]) => Array.isArray(arr) && arr.every((v) => typeof v === 'string'),
-      message: 'Each image must be a string',
+      message: 'Each image URLs must be a string',
     },
   })
-  images: string[];
+  imageURLs: string[];
 
   @Prop({
     type: String,
@@ -59,7 +58,45 @@ export class Product extends Document {
     maxlength: [100, 'Category name cannot exceed 100 characters'],
   })
   category: string;
+
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+    maxlength: [100, 'Brand name cannot exceed 100 characters'],
+  })
+  brand: string;
+
+  @Prop({
+    type: String,
+    trim: true,
+    default: '',
+  })
+  releaseDate: string;
+
+  @Prop({
+    type: [String],
+    default: [],
+    validate: {
+      validator: (arr: string[]) => Array.isArray(arr) && arr.every((v) => typeof v === 'string'),
+      message: 'Each feature must be a string',
+    },
+  })
+  features: string[];
+
+  @Prop({
+    type: Number,
+    min: [0, 'Average rating must be at least 0'],
+    default: 0,
+  })
+  averageRating: number;
+
+  @Prop({
+    type: Number,
+    min: [0, 'Review count cannot be negative'],
+    default: 0,
+  })
+  reviewCount: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-
