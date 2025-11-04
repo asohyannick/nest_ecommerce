@@ -6,6 +6,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ProfileModule } from './modules/profile/profile.module';
 import { CategoryModule } from './modules/category/category.module';
 import { ShoppingCartModule } from './modules/cart/shoppingCart.module';
+import { OrderModule } from './modules/orders/order.module';
+import { PaymentModule } from './modules/payment/payment.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -14,6 +16,8 @@ import { ShoppingCartModule } from './modules/cart/shoppingCart.module';
     ProfileModule,
     CategoryModule,
     ShoppingCartModule,
+    OrderModule,
+    PaymentModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '15m' },

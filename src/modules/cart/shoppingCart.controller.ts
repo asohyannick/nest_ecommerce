@@ -12,7 +12,7 @@ import { UserRole } from "../../common/enum/roles.enum";
 export class ShoppingCartController {
 
     constructor(private readonly shoppingCartService: ShoppingCartService) { };
-    
+
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
     @Post('create-cart')
@@ -62,5 +62,41 @@ export class ShoppingCartController {
     async removeOneShoppingCart(@Param('id') id: string) {
         const cart = await this.shoppingCartService.removeOneShoppingCart(id);
         return { success: true, message: "Shopping cart has been deleted successfully", data: cart };
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CUSTOMER)
+    @Post('add-item/:cartId')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "Item has been added to the shopping cart successfully" })
+    async addItemToCart(
+        @Param('cartId') cartId: string,
+        @Body() body: { productId: string; quantity: number }
+    ) {
+        const cart = await this.shoppingCartService.addItemToCart(cartId, body.productId, body.quantity);
+        return { success: true, message: "Item has been added to the shopping cart successfully", data: cart };
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CUSTOMER)
+    @Delete('remove-item/:cartId')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "Item has been removed from the shopping cart successfully" })
+    async removeItemFromCart(
+        @Param('cartId') cartId: string,
+        @Body() body: { productId: string }
+    ) {
+        const cart = await this.shoppingCartService.removeItemFromCart(cartId, body.productId);
+        return { success: true, message: "Item has been removed from the shopping cart successfully", data: cart };
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CUSTOMER)
+    @Delete('clear-cart/:cartId')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "All items have been cleared from the shopping cart successfully" })
+    async clearCart(@Param('cartId') cartId: string) {
+        const cart = await this.shoppingCartService.clearCart(cartId);
+        return { success: true, message: "All items have been cleared from the shopping cart successfully", data: cart };
     }
 }
