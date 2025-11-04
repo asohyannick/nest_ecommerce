@@ -12,6 +12,7 @@ import { ShippingModule } from './modules/shipping/shipping.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ReviewModule } from './modules/review/review.module';
 import { PromotionModule } from './modules/promotion/promotion.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 @Module({
   imports: [
     DatabaseModule,
@@ -26,6 +27,7 @@ import { PromotionModule } from './modules/promotion/promotion.module';
     WishlistModule,
     ReviewModule,
     PromotionModule,
+    AnalyticsModule,  
     JwtModule.register({
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '15m' },
