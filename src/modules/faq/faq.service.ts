@@ -34,10 +34,11 @@ export class FaqService {
         return faq;
     }
 
-    async deleteFaq(id: string): Promise<void> {
+    async deleteFaq(id: string): Promise<Faq> {
         const result = await this.faqModel.findByIdAndDelete(id).exec();
         if (!result) {
             throw new NotFoundException(`FAQ with ID ${id} not found`);
         }
+        return result;
     }
 }

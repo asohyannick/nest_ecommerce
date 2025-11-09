@@ -1,43 +1,60 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { Model } from "mongoose";
-import { InjectModel } from "@nestjs/mongoose";
-import { GiftCard } from "./entity/giftcard.entity";
+import { Controller, Post, Get, Put, Delete, Param, Body, HttpCode, HttpStatus, UseGuards } from "@nestjs/common";
+import { ApiResponse, ApiTags } from "@nestjs/swagger";
+import { GiftCardService } from "./giftCard.service";
 import { CreateGiftCardDto } from "./dto/CreateGiftCardDto";
-import { UpdateGiftCardDto } from "./dto/UpdateGiftCardDto";
+import { GiftCard } from "./entity/giftcard.entity";
+import { UpdateGiftCardDto } from './dto/UpdateGiftCardDto';
+import { JwtAuthGuard } from "../../common/guards/jwt-auth-guard";
+import { RolesGuard } from "../../common/guards/role.guard";
+import { Roles } from "../../common/decorators/roles.decorators";
+import { UserRole } from "../../common/enum/roles.enum";
+@ApiTags('Gift Cards Management Endpoints')
+@Controller('gift-cards')
+export class GiftCardController {
+    constructor(private readonly giftCardService: GiftCardService) { }
 
-@Injectable()
-export class GiftCardService {
-    constructor(@InjectModel(GiftCard.name) private readonly giftCardModel: Model<GiftCard>) {}
-
-    async createGiftCard(createGiftCardDto: CreateGiftCardDto): Promise<GiftCard> {
-        const giftCard = new this.giftCardModel(createGiftCardDto);
-        return giftCard.save();
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Post('create-gift-card')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiResponse({ status: 201, description: "Gift card created successfully", type: GiftCard })
+    async createGiftCard(@Body() createGiftCardDto: CreateGiftCardDto): Promise<GiftCard> {
+        return this.giftCardService.createGiftCard(createGiftCardDto);
     }
 
-    async getGiftCard(id: string): Promise<GiftCard> {
-        const giftCard = await this.giftCardModel.findById(id).exec();
-        if (!giftCard) {
-            throw new NotFoundException(`Gift card with ID ${id} not found`);
-        }
-        return giftCard;
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Get('fetch-gift-card/:id')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "Gift card retrieved successfully", type: GiftCard })
+    async getGiftCard(@Param('id') id: string): Promise<GiftCard> {
+        return this.giftCardService.getGiftCard(id);
     }
 
-    async getUserGiftCards(userId: string): Promise<GiftCard[]> {
-        return this.giftCardModel.find({ userId }).exec();
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.CUSTOMER)
+    @Get('user/:userId')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "User's gift cards retrieved successfully", type: [GiftCard] })
+    async getUserGiftCards(@Param('userId') userId: string): Promise<GiftCard[]> {
+        return this.giftCardService.getUserGiftCards(userId);
     }
 
-    async updateGiftCard(id: string, updateGiftCardDto: UpdateGiftCardDto): Promise<GiftCard> {
-        const giftCard = await this.giftCardModel.findByIdAndUpdate(id, updateGiftCardDto, { new: true, runValidators: true }).exec();
-        if (!giftCard) {
-            throw new NotFoundException(`Gift card with ID ${id} not found`);
-        }
-        return giftCard;
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Put('update-gift-card/:id')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "Gift card updated successfully", type: GiftCard })
+    async updateGiftCard(@Param('id') id: string, @Body() updateGiftCardDto: UpdateGiftCardDto): Promise<GiftCard> {
+        return this.giftCardService.updateGiftCard(id, updateGiftCardDto);
     }
 
-    async deleteGiftCard(id: string): Promise<void> {
-        const result = await this.giftCardModel.findByIdAndDelete(id).exec();
-        if (!result) {
-            throw new NotFoundException(`Gift card with ID ${id} not found`);
-        }
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+    @Delete('delete-gift-card/:id')
+    @HttpCode(HttpStatus.OK)
+    @ApiResponse({ status: 200, description: "Gift card deleted successfully" })
+    async deleteGiftCard(@Param('id') id: string): Promise<GiftCard[]> {
+        return this.giftCardService.deleteGiftCard(id);
     }
 }

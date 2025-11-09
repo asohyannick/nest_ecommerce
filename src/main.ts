@@ -53,7 +53,7 @@ async function bootstrap() {
 
   // Swagger setup
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('E-commerce Restful API Documentation developed and maintained by Asoh Yannick © Backend Software Engineer with Enterprise Features using NestJS')
+    .setTitle('E-commerce Restful API Documentation developed and maintained with TypeScript, Node.js and Nest.js framework by Asoh Yannick, A Backend Software Engineer.')
     .setDescription('This API documentation provides detailed information about the enterprise solutions such as Authentication and RBAC, Payments, Products, Cart, Orders, Shipment, Logistics and much more used in the application.')
     .setVersion('1.0')
     .addBearerAuth()

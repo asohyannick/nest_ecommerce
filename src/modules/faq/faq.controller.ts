@@ -50,11 +50,11 @@ export class FaqController {
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CUSTOMER)
     @Delete('delete-faq/:id')
     @HttpCode(HttpStatus.OK)
-    @ApiResponse({ status: 200, description: "FAQ deleted successfully" })
-    async deleteFaq(@Param('id') id: string): Promise<void> {
+    @ApiResponse({ status: 200, description: "FAQ deleted successfully", type: Faq })
+    async deleteFaq(@Param('id') id: string): Promise<Faq> {
         return this.faqService.deleteFaq(id);
     }
 }
